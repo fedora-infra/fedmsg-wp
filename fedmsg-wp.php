@@ -80,8 +80,6 @@ class fedmsg_emit
 		}
 		return true;
 	}
-	# Register our hooks with mediawiki
-
 	# This is a reimplementation of the python code in fedmsg/crypto.py
 	# That file is authoritative.  Changes there should be reflected here.
 	function sign_message($message_obj)
@@ -102,7 +100,8 @@ class fedmsg_emit
 		$tokens   = explode('.', $fqdn);
 		$hostname = $tokens[0];
 		$ssldir   = $config['ssldir'];
-		$certname = $config['certnames']['mediawiki.' . $hostname];
+        // TODO: Update this certificate information
+		$certname = $config['certnames']['fedoramagazine.org'];
 		# Step 1) - Load and encode the X509 cert
 		$cert_obj = openssl_x509_read(file_get_contents($ssldir . '/' . $certname . ".crt"));
 		$cert     = "";
@@ -123,7 +122,7 @@ class fedmsg_emit
 		global $config, $queue;
 		# Re-implement some of the logc from fedmsg/core.py
 		# We'll have to be careful to keep this up to date.
-		$prefix      = "org.fedoraproject." . $config['environment'] . ".wiki.";
+		$prefix      = "org." . $config['environment'] . ".fedoramagazine.";
 		$topic       = $prefix . $subtopic;
 		$message_obj = array(
 			"topic" => $topic,
@@ -142,48 +141,6 @@ class fedmsg_emit
 		$queue->send($topic, ZMQ::MODE_SNDMORE);
 		$queue->send($envelope);
 	}
-
-	function article_save(&$article, &$user, $text, $summary, $minoredit, $watchthis, $sectionanchor, &$flags, $revision, &$status, $baseRevId)
-	{
-		# If for some reason or another we can't create our socket, then bail.
-		if (!initialize())
-		{
-			return false;
-		}
-		$topic = "article.edit";
-		$title = $article->getTitle();
-		if ($title->getNsText())
-		{
-			$titletext = $title->getNsText() . ":" . $title->getText();
-		}
-		else
-		{
-			$titletext = $title->getText();
-		}
-		if (is_object($revision))
-		{
-			$url = $title->getFullURL('diff=prev&oldid=' . $revision->getId());
-		}
-		else
-		{
-			$url = $title->getFullURL();
-		}
-		# Just send on all the information we can...  change the attr names to be
-		# more pythonic in style, though.
-		$msg = array(
-			"title" => $titletext,
-			"user" => $user->getName(),
-			"minor_edit" => $minoredit,
-			"watch_this" => $watchthis,
-			"section_anchor" => $sectionanchor,
-			"revision" => $revision,
-			"base_rev_id" => $baseRevId,
-			"url" => $url
-		);
-		emit_message($topic, $msg);
-		return true;
-	}
-
 }
 class fedmsg_handlers
 {
