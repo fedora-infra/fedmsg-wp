@@ -119,6 +119,7 @@ class fedmsg_emit
 	}
 	protected function emit_message($subtopic, $message)
 	{
+
 		global $config, $queue;
 		# Re-implement some of the logc from fedmsg/core.py
 		# We'll have to be careful to keep this up to date.
@@ -147,6 +148,8 @@ class fedmsg_handlers
 
 	static function new_post($post_ID, $post)
 	{
+		if (!initialize()) { return false; } # Try to initialize socket
+
 		$current_user = wp_get_current_user();
 		$post_url     = get_permalink($post_ID);
 		$msg          = array(
@@ -160,8 +163,10 @@ class fedmsg_handlers
 
 	function process_stats()
 	{
+		if (!initialize()) { return false; } # Try to initialize socket
 		// API Ref: http://stats.wordpress.com/csv.php
 		// A WP API key is needed for this
+		return;
 
 	}
 }
